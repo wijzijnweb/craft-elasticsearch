@@ -158,7 +158,7 @@ class ElasticsearchService extends Component
      * @throws IndexElementException
      *                         TODO: Throw a more specific exception
      */
-    public function search(string $query, $siteId = null): array
+    public function search(string $query, $siteId = null, int $limit = null): array
     {
         if ($query === '') {
             return [];
@@ -180,7 +180,7 @@ class ElasticsearchService extends Component
         ElasticsearchRecord::$siteId = $siteId;
         try {
             $esRecord = new ElasticsearchRecord();
-            $results = $esRecord->search($query);
+            $results = $esRecord->search($query, $limit);
             $output = [];
             $callback = $this->plugin->getSettings()->resultFormatterCallback;
 

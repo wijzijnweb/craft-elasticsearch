@@ -32,6 +32,7 @@ use craft\web\Application;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
 use lhs\elasticsearch\exceptions\IndexElementException;
+use lhs\elasticsearch\jobs\BulkIndexElementJob;
 use lhs\elasticsearch\models\SettingsModel;
 use lhs\elasticsearch\services\ElasticsearchService;
 use lhs\elasticsearch\services\ElementIndexerService;
@@ -399,9 +400,7 @@ class Elasticsearch extends Plugin
         try {
             $this->indexManagementService->recreateIndexesForAllSites();
 
-            // Remove previous reindexing jobs as all elements will be reindexed anyway
-            $this->reindexQueueManagementService->clearJobs();
-            $this->reindexQueueManagementService->enqueueReindexJobs($this->service->getIndexableElementModels());
+            Craft::$app->getQueue()->push(new BulkIndexElementJob());
         } catch (IndexElementException $e) {
             /** @noinspection PhpUnhandledExceptionInspection This method should only be called in a web context so Craft::$app->getSession() will never throw */
             Craft::$app->getSession()->setError($e->getMessage());

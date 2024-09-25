@@ -143,7 +143,7 @@ class ElasticsearchRecord extends ActiveRecord
      * @throws InvalidConfigException
      * @throws Exception
      */
-    public function search(string $query)
+    public function search(string $query, int $limit = null)
     {
         // Add extra fields to search parameters
         $extraFields = ElasticsearchPlugin::getInstance()->getSettings()->extraFields;
@@ -164,7 +164,7 @@ class ElasticsearchRecord extends ActiveRecord
         $this->trigger(self::EVENT_BEFORE_SEARCH, new SearchEvent(['query' => $query]));
         $queryParams = $this->getQueryParams($query);
         $highlightParams = $this->getHighlightParams();
-        return self::find()->query($queryParams)->highlight($highlightParams)->limit(self::find()->count())->all();
+        return self::find()->query($queryParams)->highlight($highlightParams)->limit($limit ?? self::find()->count())->all();
     }
 
     /**
