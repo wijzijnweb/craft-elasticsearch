@@ -28,6 +28,8 @@ use lhs\elasticsearch\events\ErrorEvent;
 use lhs\elasticsearch\exceptions\IndexElementException;
 use lhs\elasticsearch\models\IndexableElementModel;
 use lhs\elasticsearch\records\ElasticsearchRecord;
+use yii\base\InvalidConfigException;
+use yii\queue\Queue;
 
 /**
  * Service used to interact with the Elasticsearch instance
@@ -409,6 +411,18 @@ class ElasticsearchService extends Component
             ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
             ->siteId($siteId)
             ->uri(['not', '']);
+    }
+
+    /**
+     * @return Queue | \yii\queue\db\Queue
+     * @throws InvalidConfigException
+     */
+    public function getQueue(): Queue | \yii\queue\db\Queue
+    {
+        $settings = ElasticsearchPlugin::getInstance()->getSettings();
+        return $settings->queueName
+            ? Craft::$app->get($settings->queueName)
+            : Craft::$app->getQueue();
     }
 
     public static function getSyncCachekey(): string

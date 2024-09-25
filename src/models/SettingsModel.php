@@ -97,6 +97,12 @@ class SettingsModel extends Model
     public $extraFields = [];
 
     /**
+     * @var string The name of the queue to use for reindexing jobs.
+     *             If not set, the default queue will be used.
+     */
+    public $queueName = false;
+
+    /**
      * Returns the validation rules for attributes.
      * @return array
      */

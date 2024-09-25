@@ -33,7 +33,8 @@ class ReindexQueueManagementService extends Component
     {
         $jobIds = [];
         foreach ($indexableElementModels as $model) {
-            $jobIds[] = Craft::$app->getQueue()->push(new IndexElementJob($model->toArray()));
+            $queue = Elasticsearch::getInstance()->service->getQueue();
+            $jobIds[] = $queue->push(new IndexElementJob($model->toArray()));
         }
 
         $jobIds = array_unique(array_merge($jobIds, $this->getCache()));
@@ -88,7 +89,7 @@ class ReindexQueueManagementService extends Component
      */
     protected function removeJobFromQueue(int $id)
     {
-        $queueService = Craft::$app->getQueue();
+        $queueService = Elasticsearch::getInstance()->service->getQueue();
         $methodName = $queueService instanceof \yii\queue\db\Queue ? 'remove' : 'release';
         $queueService->$methodName($id);
     }

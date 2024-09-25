@@ -400,7 +400,8 @@ class Elasticsearch extends Plugin
         try {
             $this->indexManagementService->recreateIndexesForAllSites();
 
-            Craft::$app->getQueue()->push(new BulkIndexElementJob());
+            $queue = $this->service->getQueue();
+            $queue->push(new BulkIndexElementJob());
         } catch (IndexElementException $e) {
             /** @noinspection PhpUnhandledExceptionInspection This method should only be called in a web context so Craft::$app->getSession() will never throw */
             Craft::$app->getSession()->setError($e->getMessage());
