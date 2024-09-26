@@ -29,6 +29,7 @@ use lhs\elasticsearch\exceptions\IndexElementException;
 use lhs\elasticsearch\models\IndexableElementModel;
 use lhs\elasticsearch\records\ElasticsearchRecord;
 use yii\base\InvalidConfigException;
+use yii\data\Pagination;
 use yii\queue\Queue;
 
 /**
@@ -160,7 +161,13 @@ class ElasticsearchService extends Component
      * @throws IndexElementException
      *                         TODO: Throw a more specific exception
      */
-    public function search(string $query, $siteId = null, int $limit = null): array
+    public function search(
+        string $query,
+        $siteId = null,
+        int $limit = null,
+        string $elementHandle = null,
+        Pagination $pagination = null
+    ): array
     {
         if ($query === '') {
             return [];
@@ -182,7 +189,12 @@ class ElasticsearchService extends Component
         ElasticsearchRecord::$siteId = $siteId;
         try {
             $esRecord = new ElasticsearchRecord();
-            $results = $esRecord->search($query, $limit);
+            $results = $esRecord->search(
+                $query,
+                limit: $limit,
+                elementHandle: $elementHandle,
+                pagination: $pagination
+            );
             $output = [];
             $callback = $this->plugin->getSettings()->resultFormatterCallback;
 

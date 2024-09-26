@@ -18,6 +18,7 @@ use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
 use lhs\elasticsearch\events\SearchEvent;
 use yii\base\Event;
 use yii\base\InvalidConfigException;
+use yii\data\Pagination;
 use yii\elasticsearch\ActiveRecord;
 use yii\elasticsearch\Exception;
 use yii\helpers\Json;
@@ -143,7 +144,12 @@ class ElasticsearchRecord extends ActiveRecord
      * @throws InvalidConfigException
      * @throws Exception
      */
-    public function search(string $query, int $limit = null)
+    public function search(
+        string $query,
+        int $limit = null,
+        string $elementHandle = null,
+        Pagination $pagination = null
+    ): array
     {
         // Add extra fields to search parameters
         $extraFields = ElasticsearchPlugin::getInstance()->getSettings()->extraFields;
@@ -164,7 +170,25 @@ class ElasticsearchRecord extends ActiveRecord
         $this->trigger(self::EVENT_BEFORE_SEARCH, new SearchEvent(['query' => $query]));
         $queryParams = $this->getQueryParams($query);
         $highlightParams = $this->getHighlightParams();
-        return self::find()->query($queryParams)->highlight($highlightParams)->limit($limit ?? self::find()->count())->all();
+        $query = self::find()
+            ->query($queryParams)
+            ->highlight($highlightParams);
+
+        if($elementHandle) {
+            $query->where(['elementHandle' => $elementHandle]);
+        }
+
+        if($pagination) {
+            $pagination->totalCount = $query->count();
+            $pagination->pageSize = $limit;
+
+            $query->limit($pagination->limit);
+            $query->offset($pagination->offset);
+        } else {
+            $query->limit($limit);
+        }
+
+        return $query->all();
     }
 
     /**
