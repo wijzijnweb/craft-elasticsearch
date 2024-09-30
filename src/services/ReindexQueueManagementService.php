@@ -15,6 +15,7 @@ use craft\base\Component;
 use lhs\elasticsearch\Elasticsearch;
 use lhs\elasticsearch\jobs\IndexElementJob;
 use lhs\elasticsearch\models\IndexableElementModel;
+use yii\base\InvalidConfigException;
 
 /**
  * Service used to manage the reindex job queue.
@@ -26,10 +27,11 @@ class ReindexQueueManagementService extends Component
     const CACHE_KEY = Elasticsearch::PLUGIN_HANDLE . '_reindex_jobs';
 
     /**
-     * Add reindex job for the given entries
      * @param IndexableElementModel[] $indexableElementModels
+     * @return void
+     * @throws InvalidConfigException
      */
-    public function enqueueReindexJobs(array $indexableElementModels)
+    public function enqueueReindexJobs(array $indexableElementModels): void
     {
         $jobIds = [];
         foreach ($indexableElementModels as $model) {
@@ -46,7 +48,7 @@ class ReindexQueueManagementService extends Component
     /**
      * Remove all jobs from the queue
      */
-    public function clearJobs()
+    public function clearJobs(): void
     {
         $jobIds = $this->getCache();
         foreach ($jobIds as $jobId) {
@@ -61,13 +63,13 @@ class ReindexQueueManagementService extends Component
      * Remove a job from the queue
      * @param int $id The id of the job to remove
      */
-    public function removeJob(int $id)
+    public function removeJob(int $id): void
     {
         $this->removeJobFromQueue($id);
         $this->removeJobIdFromCache($id);
     }
 
-    public function enqueueJob(int $entryId, int $siteId, string $type)
+    public function enqueueJob(int $entryId, int $siteId, string $type): void
     {
         $job = new IndexElementJob(
             [
@@ -87,7 +89,7 @@ class ReindexQueueManagementService extends Component
      * This does NOT remove the job id from the cache
      * @param int $id The id of the job to remove
      */
-    protected function removeJobFromQueue(int $id)
+    protected function removeJobFromQueue(int $id): void
     {
         $queueService = Elasticsearch::getInstance()->service->getQueue();
         $methodName = $queueService instanceof \yii\queue\db\Queue ? 'remove' : 'release';
@@ -98,7 +100,7 @@ class ReindexQueueManagementService extends Component
      * Add a job id to the cache
      * @param int $id The job id to add to the cache
      */
-    protected function addJobIdToCache(int $id)
+    protected function addJobIdToCache(int $id): void
     {
         $jobIds = $this->getCache();
         $jobIds[] = $id;
@@ -110,7 +112,7 @@ class ReindexQueueManagementService extends Component
      * Remove a job id from the cache
      * @param int $id The job id to remove from the cache
      */
-    protected function removeJobIdFromCache(int $id)
+    protected function removeJobIdFromCache(int $id): void
     {
         $jobIds = array_diff($this->getCache(), [$id]);
 

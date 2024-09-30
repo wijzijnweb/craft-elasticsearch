@@ -73,14 +73,17 @@ class ElementIndexerService extends Component
         $esRecord->elementHandle = $element->refHandle();
         //@formatter:on
 
-        $content = $this->getElementContent($element);
-        if ($content === false) {
-            $message = "Not indexing element #{$element->id} since it doesn't have a template.";
-            Craft::debug($message, __METHOD__);
-            return $message;
+        if(!( ElasticsearchPlugin::getInstance()->getSettings()['extraFields']['content'] ?? false )) {
+            $content = $this->getElementContent($element);
+            if ($content === false) {
+                $message = "Not indexing element #{$element->id} since it doesn't have a template.";
+                Craft::debug($message, __METHOD__);
+                return $message;
+            }
+
+            $esRecord->content = base64_encode(trim($content));
         }
 
-        $esRecord->content = base64_encode(trim($content));
 
         $isSuccessfullySaved = $esRecord->save();
 

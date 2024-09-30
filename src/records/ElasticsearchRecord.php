@@ -293,7 +293,7 @@ class ElasticsearchRecord extends ActiveRecord
      * @throws InvalidConfigException If the `$siteId` isn't set
      * @throws Exception If an error occurs while communicating with the Elasticsearch server
      */
-    public static function createIndex(array $schema, $force = false)
+    public static function createIndex(array $schema, bool $force = false)
     {
         $db = static::getDb();
         $command = $db->createCommand();
