@@ -67,9 +67,9 @@ class ElementIndexerService extends Component
         $esRecord->title         = $element->title;
         $esRecord->url           = $element->url;
         $esRecord->postDate      = $postDate ? Db::prepareDateForDb($postDate) : null;
-        $esRecord->noPostDate    = $postDate ? false : true;
+        $esRecord->noPostDate    = !$postDate;
         $esRecord->expiryDate    = $expiryDate ? Db::prepareDateForDb($expiryDate) : null;
-        $esRecord->noExpiryDate  = $expiryDate ? false : true;
+        $esRecord->noExpiryDate  = !$expiryDate;
         $esRecord->elementHandle = $element->refHandle();
         //@formatter:on
 

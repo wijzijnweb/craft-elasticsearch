@@ -97,6 +97,11 @@ class SettingsModel extends Model
     public $extraFields = [];
 
     /**
+     * @var array An array of fields that should not be able to search on.
+     */
+    public $excludedSearchFields = [];
+
+    /**
      * @var string The name of the queue to use for reindexing jobs.
      *             If not set, the default queue will be used.
      */

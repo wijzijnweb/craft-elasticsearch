@@ -148,6 +148,7 @@ class ElasticsearchRecord extends ActiveRecord
         string $query,
         int $limit = null,
         string $elementHandle = null,
+        string $section = null,
         Pagination $pagination = null
     ): array
     {
@@ -155,7 +156,9 @@ class ElasticsearchRecord extends ActiveRecord
         $extraFields = ElasticsearchPlugin::getInstance()->getSettings()->extraFields;
         $extraHighlighParams = [];
         if (!empty($extraFields)) {
-            $this->setSearchFields(ArrayHelper::merge($this->getSearchFields(), array_keys($extraFields)));
+            $excludedSearchFields = ElasticsearchPlugin::getInstance()->getSettings()->excludedSearchFields;
+            $searchFields = ArrayHelper::merge($this->getSearchFields(), array_keys($extraFields));
+            $this->setSearchFields(array_diff($searchFields, $excludedSearchFields));
             foreach ($extraFields as $fieldName => $fieldParams) {
                 $fieldHighlighter = ArrayHelper::getValue($fieldParams, 'highlighter');
                 if (!empty($fieldHighlighter)) {
@@ -174,8 +177,11 @@ class ElasticsearchRecord extends ActiveRecord
             ->query($queryParams)
             ->highlight($highlightParams);
 
-        if($elementHandle) {
-            $query->where(['elementHandle' => $elementHandle]);
+        if($elementHandle || $section) {
+            $query->where(array_filter([
+                'elementHandle' => $elementHandle,
+                'section' => $section
+            ], fn($value)=> $value));
         }
 
         if($pagination) {

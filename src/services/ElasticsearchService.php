@@ -166,6 +166,7 @@ class ElasticsearchService extends Component
         $siteId = null,
         int $limit = null,
         string $elementHandle = null,
+        string $section = null,
         Pagination $pagination = null
     ): array
     {
@@ -193,6 +194,7 @@ class ElasticsearchService extends Component
                 $query,
                 limit: $limit,
                 elementHandle: $elementHandle,
+                section: $section,
                 pagination: $pagination
             );
             $output = [];
