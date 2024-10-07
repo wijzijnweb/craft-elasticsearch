@@ -162,11 +162,9 @@ class ElasticsearchService extends Component
      *                         TODO: Throw a more specific exception
      */
     public function search(
-        string $query,
+        string | array $query,
         $siteId = null,
         int $limit = null,
-        string $elementHandle = null,
-        string $section = null,
         Pagination $pagination = null
     ): array
     {
@@ -193,8 +191,6 @@ class ElasticsearchService extends Component
             $results = $esRecord->search(
                 $query,
                 limit: $limit,
-                elementHandle: $elementHandle,
-                section: $section,
                 pagination: $pagination
             );
             $output = [];

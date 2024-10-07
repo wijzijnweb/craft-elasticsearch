@@ -145,10 +145,10 @@ class ElasticsearchRecord extends ActiveRecord
      * @throws Exception
      */
     public function search(
-        string $query,
+        string | array $query,
         int $limit = null,
         string $elementHandle = null,
-        string $section = null,
+        string | array $section = null,
         Pagination $pagination = null
     ): array
     {
@@ -170,19 +170,12 @@ class ElasticsearchRecord extends ActiveRecord
         $highlightParams['fields'] = ArrayHelper::merge($highlightParams['fields'], $extraHighlighParams);
         $this->setHighlightParams($highlightParams);
 
-        $this->trigger(self::EVENT_BEFORE_SEARCH, new SearchEvent(['query' => $query]));
+        $this->trigger(self::EVENT_BEFORE_SEARCH, new SearchEvent(compact('query')));
         $queryParams = $this->getQueryParams($query);
         $highlightParams = $this->getHighlightParams();
         $query = self::find()
             ->query($queryParams)
             ->highlight($highlightParams);
-
-        if($elementHandle || $section) {
-            $query->where(array_filter([
-                'elementHandle' => $elementHandle,
-                'section' => $section
-            ], fn($value)=> $value));
-        }
 
         if($pagination) {
             $pagination->totalCount = $query->count();
@@ -450,8 +443,12 @@ class ElasticsearchRecord extends ActiveRecord
      * @return mixed
      * @throws InvalidConfigException
      */
-    public function getQueryParams($query)
+    public function getQueryParams(string | array $query)
     {
+        $query = is_array($query)
+            ? $query
+            : ['*' => $query];
+
         if ($this->_queryParams === null) {
             $currentTimeDb = Db::prepareDateForDb(new \DateTime());
             $this->_queryParams = [
@@ -460,12 +457,28 @@ class ElasticsearchRecord extends ActiveRecord
                         [
                             'multi_match' => [
                                 'fields'   => $this->getSearchFields(),
-                                'query'    => $query,
+                                'query'    => $query['*'],
                                 'analyzer' => self::siteAnalyzer(),
                                 'operator' => 'and',
                             ],
                         ],
                     ],
+                    'should' => array_reduce(
+                        array_filter(array_keys($query), fn($key)=> $key !== '*'),
+                        fn($carry, $key) => array_merge(
+                            $carry,
+                            array_map(
+                                fn($value) => [
+                                    'match' => [
+                                        $key => $value,
+                                    ],
+                                ],
+                                is_array($query[$key]) ? $query[$key] : [$query[$key]]
+                            )
+                        ),
+                        []
+                    ),
+                    'minimum_should_match' => count(array_filter($query, fn($key)=> $key !== '*', ARRAY_FILTER_USE_KEY)),
                     'filter' => [
                         'bool' => [
                             'must' => [
