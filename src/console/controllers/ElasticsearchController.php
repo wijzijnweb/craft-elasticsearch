@@ -10,11 +10,15 @@
 
 namespace lhs\elasticsearch\console\controllers;
 
+use GuzzleHttp\Exception\GuzzleException;
 use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
 use lhs\elasticsearch\exceptions\IndexElementException;
 use lhs\elasticsearch\models\IndexableElementModel;
+use yii\base\InvalidConfigException;
 use yii\console\Controller;
 use yii\console\ExitCode;
+use yii\db\Exception;
+use yii\db\StaleObjectException;
 use yii\helpers\Console;
 
 /**
@@ -115,6 +119,22 @@ class ElasticsearchController extends Controller
         $elementDescriptors = $this->plugin->service->getIndexableDigitalProductModels();
 
         return $this->reindexElements($elementDescriptors, 'digitalProducts');
+    }
+
+    /**
+     * @return int
+     * @throws IndexElementException
+     * @throws GuzzleException
+     * @throws InvalidConfigException
+     * @throws Exception
+     * @throws StaleObjectException
+     * @throws \yii\elasticsearch\Exception
+     */
+    public function actionReindexCategories(): int
+    {
+        $elementDescriptors = $this->plugin->service->getIndexableCategoryModels();
+
+        return $this->reindexElements($elementDescriptors, 'categories');
     }
 
 

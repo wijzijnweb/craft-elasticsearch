@@ -147,8 +147,6 @@ class ElasticsearchRecord extends ActiveRecord
     public function search(
         string | array $query,
         int $limit = null,
-        string $elementHandle = null,
-        string | array $section = null,
         Pagination $pagination = null
     ): array
     {

@@ -16,6 +16,7 @@ use craft\base\Element;
 use craft\commerce\elements\Product;
 use craft\digitalproducts\elements\Product as DigitalProduct;
 use craft\elements\Asset;
+use craft\elements\Category;
 use craft\elements\Entry;
 use craft\errors\SiteNotFoundException;
 use craft\helpers\Db;
@@ -59,8 +60,10 @@ class ElementIndexerService extends Component
 
         Craft::info("Indexing entry {$element->url}", __METHOD__);
 
-        $postDate = $element instanceof Asset ? $element->dateCreated : $element->postDate;
-        $expiryDate = $element instanceof Asset ? null : $element->expiryDate;
+        $isTypeA = $element instanceof Asset
+            || $element instanceof Category;
+        $postDate = $isTypeA ? $element->dateCreated : $element->postDate;
+        $expiryDate = $isTypeA ? null : $element->expiryDate;
 
         $esRecord = $this->getElasticRecordForElement($element);
         //@formatter:off
@@ -83,7 +86,6 @@ class ElementIndexerService extends Component
 
             $esRecord->content = base64_encode(trim($content));
         }
-
 
         $isSuccessfullySaved = $esRecord->save();
 
@@ -123,8 +125,9 @@ class ElementIndexerService extends Component
             || $element instanceof Product
             || $element instanceof DigitalProduct
             || $element instanceof Asset
+            || $element instanceof Category
         )) {
-            $message = "Not indexing entry #{$element->id} since it is not an entry, an asset, a product or a digital product.";
+            $message = "Not indexing entry #{$element->id} since it is not an entry, an asset, a product, a category or a digital product.";
             Craft::debug($message, __METHOD__);
             return $message;
         }

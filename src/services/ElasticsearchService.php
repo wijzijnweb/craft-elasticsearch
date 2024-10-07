@@ -19,6 +19,8 @@ use craft\base\Component;
 use craft\commerce\elements\Product;
 use craft\digitalproducts\elements\Product as DigitalProduct;
 use craft\elements\Asset;
+use craft\elements\Category;
+use craft\elements\db\CategoryQuery;
 use craft\elements\Entry;
 use craft\errors\SiteNotFoundException;
 use craft\helpers\ArrayHelper;
@@ -246,6 +248,7 @@ class ElasticsearchService extends Component
     {
         $models = $this->getIndexableEntryModels($siteIds);
         $models = \yii\helpers\ArrayHelper::merge($models, $this->getIndexableAssetModels($siteIds));
+        $models = \yii\helpers\ArrayHelper::merge($models, $this->getIndexableCategoryModels($siteIds));
         if ($this->plugin->isCommerceEnabled()) {
             $models = ArrayHelper::merge($models, $this->getIndexableProductModels($siteIds));
 
@@ -358,6 +361,33 @@ class ElasticsearchService extends Component
     }
 
     /**
+     * @return array
+     */
+    public function getIndexableCategoryModels(): array
+    {
+        $categories = [];
+        $siteIds = Craft::$app->getSites()->getAllSiteIds();
+        foreach ($siteIds as $siteId) {
+            $siteEntries = $this->getIndexableCategoriesQuery($siteId)
+                ->select(['elements.id as elementId', 'elements_sites.siteId'])
+                ->asArray(true)
+                ->all();
+            $categories = ArrayHelper::merge($categories, $siteEntries);
+        }
+
+        return array_map(
+            static function ($entry): IndexableElementModel {
+                $model = new IndexableElementModel();
+                $model->elementId = $entry['elementId'];
+                $model->siteId = $entry['siteId'];
+                $model->type = Category::class;
+                return $model;
+            },
+            $categories
+        );
+    }
+
+    /**
      * Return a list of enabled assets as an array of elements descriptors
      * @param int[]|null $siteIds An array containing the ids of sites to be or reindexed, or `null` to reindex all sites.
      * @return array An array of asset descriptors. An asset descriptor is an associative array with the `elementId`, `siteId` and `type` keys.
@@ -419,6 +449,14 @@ class ElasticsearchService extends Component
     {
         return DigitalProduct::find()
             ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
+            ->siteId($siteId)
+            ->uri(['not', '']);
+    }
+
+    public function getIndexableCategoriesQuery($siteId): CategoryQuery
+    {
+        return Category::find()
+            ->status([Category::STATUS_ENABLED])
             ->siteId($siteId)
             ->uri(['not', '']);
     }

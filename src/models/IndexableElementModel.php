@@ -7,6 +7,7 @@ use craft\base\Element;
 use craft\commerce\elements\Product;
 use craft\digitalproducts\elements\Product as DigitalProduct;
 use craft\elements\Asset;
+use craft\elements\Category;
 use craft\elements\Entry;
 use lhs\elasticsearch\exceptions\IndexableElementModelException;
 
@@ -46,6 +47,9 @@ class IndexableElementModel extends \craft\base\Model implements \JsonSerializab
                 break;
             case Asset::class:
                 $element = Craft::$app->getAssets()->getAssetById($this->elementId, $this->siteId);
+                break;
+            case Category::class:
+                $element = Craft::$app->getCategories()->getCategoryById($this->elementId, $this->siteId);
                 break;
             default:
                 throw new IndexableElementModelException($this, IndexableElementModelException::UNEXPECTED_TYPE);
