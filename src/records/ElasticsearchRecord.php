@@ -457,7 +457,10 @@ class ElasticsearchRecord extends ActiveRecord
                                 'fields'   => $this->getSearchFields(),
                                 'query'    => $query['*'],
                                 'analyzer' => self::siteAnalyzer(),
-                                'operator' => 'and',
+                                ...[
+                                    'operator' => 'and',
+                                    ...ElasticsearchPlugin::getInstance()->settings->searchParameters,
+                                ],
                             ],
                         ],
                     ],

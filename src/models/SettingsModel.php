@@ -108,6 +108,11 @@ class SettingsModel extends Model
     public $queueName = false;
 
     /**
+     * @var array An array of parameters to pass to the search method.
+     */
+    public $searchParameters = [];
+
+    /**
      * Returns the validation rules for attributes.
      * @return array
      */
