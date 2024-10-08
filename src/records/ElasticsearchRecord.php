@@ -156,7 +156,9 @@ class ElasticsearchRecord extends ActiveRecord
         if (!empty($extraFields)) {
             $excludedSearchFields = ElasticsearchPlugin::getInstance()->getSettings()->excludedSearchFields;
             $searchFields = ArrayHelper::merge($this->getSearchFields(), array_keys($extraFields));
-            $this->setSearchFields(array_diff($searchFields, $excludedSearchFields));
+            $this->setSearchFields(
+                array_values(array_diff($searchFields, $excludedSearchFields))
+            );
             foreach ($extraFields as $fieldName => $fieldParams) {
                 $fieldHighlighter = ArrayHelper::getValue($fieldParams, 'highlighter');
                 if (!empty($fieldHighlighter)) {
