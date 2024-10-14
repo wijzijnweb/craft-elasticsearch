@@ -170,7 +170,6 @@ class ElasticsearchRecord extends ActiveRecord
         $highlightParams['fields'] = ArrayHelper::merge($highlightParams['fields'], $extraHighlighParams);
         $this->setHighlightParams($highlightParams);
 
-        $this->trigger(self::EVENT_BEFORE_SEARCH, new SearchEvent(compact('query')));
         $queryParams = $this->getQueryParams($query);
         $highlightParams = $this->getHighlightParams();
         $query = self::find()
@@ -186,6 +185,8 @@ class ElasticsearchRecord extends ActiveRecord
         } else {
             $query->limit($limit);
         }
+
+        $this->trigger(self::EVENT_BEFORE_SEARCH, new SearchEvent(compact('query')));
 
         return $query->all();
     }
