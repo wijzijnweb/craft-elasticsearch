@@ -456,33 +456,51 @@ class ElasticsearchRecord extends ActiveRecord
                 'bool' => [
                     'must'   => [
                         [
-                            'multi_match' => [
-                                'fields'   => $this->getSearchFields(),
-                                'query'    => $query['*'],
-                                'analyzer' => self::siteAnalyzer(),
-                                ...[
-                                    'operator' => 'and',
-                                    ...ElasticsearchPlugin::getInstance()->settings->searchParameters,
+                            'bool' => [
+                                'should' => [
+                                    ...array_map(fn(string $field)=> [
+                                        'match' => [
+                                            $field => [
+                                                'query' => $query['*'],
+                                                'analyzer' => self::siteAnalyzer(),
+                                                'operator' => 'and',
+
+                                                ...array_filter([
+                                                    ...array_filter(
+                                                        ElasticsearchPlugin::getInstance()->settings->searchParameters,
+                                                        fn($fn)=> $fn !== 'fields',
+                                                        ARRAY_FILTER_USE_KEY
+                                                    ),
+                                                    ...ElasticsearchPlugin::getInstance()->settings->searchParameters['fields'][$field] ?? [],
+                                                ], fn($value)=> $value !== false),
+                                            ]
+                                        ]
+                                    ],$this->getSearchFields())
                                 ],
+                                'minimum_should_match' => 1,
+                            ]
+                        ],
+                        [
+                            'bool' => [
+                                'should' => array_reduce(
+                                    array_filter(array_keys($query), fn($key)=> $key !== '*'),
+                                    fn($carry, $key) => array_merge(
+                                        $carry,
+                                        array_map(
+                                            fn($value) => [
+                                                'match' => [
+                                                    $key => $value,
+                                                ],
+                                            ],
+                                            is_array($query[$key]) ? $query[$key] : [$query[$key]]
+                                        )
+                                    ),
+                                    []
+                                ),
+                                'minimum_should_match' => count(array_filter($query, fn($key)=> $key !== '*', ARRAY_FILTER_USE_KEY)),
                             ],
                         ],
                     ],
-                    'should' => array_reduce(
-                        array_filter(array_keys($query), fn($key)=> $key !== '*'),
-                        fn($carry, $key) => array_merge(
-                            $carry,
-                            array_map(
-                                fn($value) => [
-                                    'match' => [
-                                        $key => $value,
-                                    ],
-                                ],
-                                is_array($query[$key]) ? $query[$key] : [$query[$key]]
-                            )
-                        ),
-                        []
-                    ),
-                    'minimum_should_match' => count(array_filter($query, fn($key)=> $key !== '*', ARRAY_FILTER_USE_KEY)),
                     'filter' => [
                         'bool' => [
                             'must' => [
