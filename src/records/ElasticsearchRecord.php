@@ -452,13 +452,15 @@ class ElasticsearchRecord extends ActiveRecord
 
         if ($this->_queryParams === null) {
             $currentTimeDb = Db::prepareDateForDb(new \DateTime());
+            $queryTerms = explode(' ', $query['*']);
+
             $this->_queryParams = [
                 'bool' => [
                     'must'   => [
                         [
                             'bool' => [
-                                'should' => [
-                                    ...array_map(fn(string $field)=> [
+                                'should' => array_merge([
+                                    ...array_map(fn(string $field) => [
                                         'match' => [
                                             $field => [
                                                 'query' => $query['*'],
@@ -475,15 +477,28 @@ class ElasticsearchRecord extends ActiveRecord
                                                 ], fn($value)=> $value !== false),
                                             ]
                                         ]
-                                    ],$this->getSearchFields())
-                                ],
+                                    ], $this->getSearchFields())
+                                ],[
+                                    ...array_merge(
+                                        ...array_map(fn(string $field) => [
+                                            ...array_map(fn(string $term) => [
+                                                'wildcard' => [
+                                                    $field => [
+                                                        'value' => $term . '*',
+                                                        ...ElasticsearchPlugin::getInstance()->settings->wildcards['fields'][$field] ?? []
+                                                    ]
+                                                ]
+                                            ], $queryTerms)
+                                        ], array_keys(ElasticsearchPlugin::getInstance()->settings->wildcards['fields'] ?? []))
+                                    )
+                                ]),
                                 'minimum_should_match' => 1,
                             ]
                         ],
                         [
                             'bool' => [
                                 'should' => array_reduce(
-                                    array_filter(array_keys($query), fn($key)=> $key !== '*'),
+                                    array_filter(array_keys($query), fn($key) => $key !== '*'),
                                     fn($carry, $key) => array_merge(
                                         $carry,
                                         array_map(
@@ -497,7 +512,7 @@ class ElasticsearchRecord extends ActiveRecord
                                     ),
                                     []
                                 ),
-                                'minimum_should_match' => count(array_filter($query, fn($key)=> $key !== '*', ARRAY_FILTER_USE_KEY)),
+                                'minimum_should_match' => count(array_filter($query, fn($key) => $key !== '*', ARRAY_FILTER_USE_KEY)),
                             ],
                         ],
                     ],

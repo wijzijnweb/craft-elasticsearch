@@ -112,6 +112,8 @@ class SettingsModel extends Model
      */
     public $searchParameters = [];
 
+    public $wildcards = [];
+
     /**
      * Returns the validation rules for attributes.
      * @return array
